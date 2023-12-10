@@ -1,49 +1,61 @@
 #!/bin/bash
 
-if [ $# != 1 ]; then
-	echo "Usage: $0 <repository>"
+if [ $# < 2 ]; then
+	echo "Usage: $0 <repository> <interval in seconds>"
 	exit 1
 fi
 
-DIRECTORY=$1
-TIMESTAMP=$(date +%s)
-UPDATE_BRANCH="ttsnp"
-SNAPSHOT_BRANCH="ttsnaps"
+while true; do
+	echo "Running TutoSnap"
 
-CURRENT_BRANCH=$(git branch --show-current)
+	DIRECTORY=$1
+	INTERVAL=$2 
+	TIMESTAMP=$(date +%s)
+	SNAPSHOT_BRANCH="ttsnaps"
+	CURRENT_BRANCH=$(git branch --show-current)
 
-# Git actions
-git add .
+	# Navigate to right repository
+	cd ~/$DIRECTORY
 
-git commit -m "ttsnp_${TIMESTAMP}"
+	# DEBUG MODE
+	# echo "DEBUG CHANGES" >> DEBUG.txt
 
-# Check if SNAPSHOT BRANCH is already created
-EXISTING_BRANCH=$(git ls-remote --heads origin ${SNAPSHOT_BRANCH})
+	# Git actions
+	git add .
 
-if [[ -z ${EXISTING_BRANCH} ]]; then
-	git checkout -b $SNAPSHOT_BRANCH
-else
-	git checkout $SNAPSHOT_BRANCH
-fi
+	git commit -m "ttsnp_${TIMESTAMP}"
 
-git merge -X theirs --no-ff -m "________" -
+	# Check if SNAPSHOT BRANCH is already created
+	EXISTING_BRANCH=$(git ls-remote --heads origin ${SNAPSHOT_BRANCH})
 
-if [[ -z ${EXISTING_BRANCH} ]]; then
-	git push --set-upstream origin $SNAPSHOT_BRANCH --force
-else
-	git push --force
-fi
+	if [[ -z ${EXISTING_BRANCH} ]]; then
+		git checkout -b $SNAPSHOT_BRANCH
+	else
+		git checkout $SNAPSHOT_BRANCH
+	fi
 
-git checkout -
+	git merge -X theirs --no-ff -m "________" -
 
-git reset --soft HEAD~1
+	if [[ -z ${EXISTING_BRANCH} ]]; then
+		git push --set-upstream origin $SNAPSHOT_BRANCH --force
+	else
+		git push --force
+	fi
 
-echo "Snapshot taken and committed to $SNAPSHOT_BRANCH"
+	git checkout -
 
-# git add .
-# git commit -m <message>
-# git checkout <branch>
-# git merge -X theirs --no-ff -m <timestamp message> -
-# git push (--set-upstream origin <branch>
-# git checkout -
-# git reset --soft HEAD~1
+	git reset --soft HEAD~1
+
+	echo "Snapshot taken and committed to $SNAPSHOT_BRANCH"
+
+	# git add .
+	# git commit -m <message>
+	# git checkout <branch>
+	# git merge -X theirs --no-ff -m <timestamp message> -
+	# git push (--set-upstream origin <branch>
+	# git checkout -
+	# git reset --soft HEAD~1
+
+	sleep $INTERVAL
+done
+
